@@ -3,15 +3,14 @@ VERSION := $(shell git describe --tags --always --dirty="-dev")
 LDFLAGS := -ldflags='-X "main.Version=$(VERSION)"'
 
 release: gh-release clean dist sync
-	govendor sync
-	github-release release \
+	$(RELEASE) release \
 	--security-token $$GH_LOGIN \
 	--user segmentio \
 	--repo chamber \
 	--tag $(VERSION) \
 	--name $(VERSION)
 
-	github-release upload \
+	$(RELEASE) upload \
 	--security-token $$GH_LOGIN \
 	--user segmentio \
 	--repo chamber \
@@ -19,7 +18,7 @@ release: gh-release clean dist sync
 	--name chamber-$(VERSION)-darwin-amd64 \
 	--file dist/chamber-$(VERSION)-darwin-amd64
 
-	github-release upload \
+	$(RELEASE) upload \
 	--security-token $$GH_LOGIN \
 	--user segmentio \
 	--repo chamber \
@@ -45,15 +44,11 @@ sync: govendor
 	govendor sync
 
 release-binary: sync dist
-ifndef version
-	@echo "Please provide a version"
-	exit 1
-endif
 ifndef GITHUB_TOKEN
 	@echo "Please set GITHUB_TOKEN in the environment"
 	exit 1
 endif
 	# These commands are not idempotent, so ignore failures if an upload repeats
 	$(RELEASE) release --user onemedical --repo chamber --tag $(VERSION) || true
-	$(RELEASE) upload --user onemedical --repo chamber --tag $(VERSION) --name circle-linux-amd64 --file releases/$(version)/chamber-linux-amd64 || true
-	$(RELEASE) upload --user onemedical --repo chamber --tag $(VERSION) --name circle-darwin-amd64 --file releases/$(version)/chamber-darwin-amd64 || true
+	$(RELEASE) upload --user onemedical --repo chamber --tag $(VERSION) --name chamber-linux-amd64 --file releases/$(VERSION)/chamber-linux-amd64 || true
+	$(RELEASE) upload --user onemedical --repo chamber --tag $(VERSION) --name chamber-darwin-amd64 --file releases/$(VERSION)/chamber-darwin-amd64 || true
